@@ -1,6 +1,6 @@
 # server.py
 import socket
-from common import parse_packet, generate_ecdh_keys, derive_shared_secret, encrypt_data
+from common import parse_packet, generate_ecdh_keys, derive_shared_secret, encrypt_data, create_initial_packet
 from cryptography.hazmat.primitives import serialization
 import os
 
