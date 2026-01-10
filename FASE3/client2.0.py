@@ -1,7 +1,7 @@
 # client.py
 import socket
 from cryptography.hazmat.primitives import serialization
-from common import create_initial_packet, generate_ecdh_keys, derive_shared_secret, encrypt_data
+from common import create_initial_packet, generate_ecdh_keys, derive_shared_secret, encrypt_data,parse_packet
 import os
 
 
