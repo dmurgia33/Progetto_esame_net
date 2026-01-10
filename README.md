@@ -1,7 +1,9 @@
 # Progetto_network_security
 
 FASE 0 → Scope e assunzioni
+
 FASE 1 → Specifica del protocollo (logica)
+
 FASE 2 → UDP minimale (senza sicurezza)
 FASE 3 → Crittografia isolata (senza protocollo)
 FASE 4 → Integrazione protocollo + handshake
