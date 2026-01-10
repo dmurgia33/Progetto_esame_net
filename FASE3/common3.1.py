@@ -1,11 +1,12 @@
 #common3.1.py (AGGIORNAMENTO PER PROTOCOLLO A STATI)
 import struct
-from cryptography.hazmat.primitives import serialization
+import os
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 # --- TIPI DI PACCHETTO AGGIORNATI ---
 PTYPE_INITIAL   = 0x01  # Client Hello (Primo tentativo)
