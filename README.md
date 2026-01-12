@@ -1,6 +1,6 @@
 # Progetto_network_security
 
-FASE 0 → Scope e assunzioni
+FASE 0 → Scopo e assunzioni
 
 FASE 1 → Specifica del protocollo (logica)
 
