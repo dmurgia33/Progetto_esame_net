@@ -35,7 +35,7 @@ def main():
         print(" -> Chiavi derivate.")
 
         # 5. INVIO DATI (DEBUG: IN CHIARO)
-        real_pkt_num = 100 
+        real_pkt_num = 0xDEADBEEF 
         msg = b"Vedi il numero 100 in chiaro su Wireshark?"
         
         # Cifriamo il payload
