@@ -1,1 +1,99 @@
+# common.py
+import struct
+import os
+import time
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
+# --- COSTANTI PROTOCOLLO ---
+PTYPE_INITIAL   = 0x01
+PTYPE_RETRY     = 0x02
+PTYPE_HANDSHAKE = 0x03
+PTYPE_DATA      = 0x04
+
+# --- FUNZIONI BASE ---
+def serialize_public_key(public_key):
+    return public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
+    )
+
+def create_packet(ptype, conn_id, pkt_num, payload=b''):
+    header = struct.pack('!B I I', ptype, conn_id, pkt_num)
+    return header + payload
+
+def parse_raw_header(packet):
+    if len(packet) < 9: raise ValueError("Packet too short")
+    type_byte, conn_id = struct.unpack('!B I', packet[:5])
+    raw_pn = packet[5:9] 
+    payload = packet[9:]
+    return type_byte, conn_id, raw_pn, payload
+
+def parse_handshake_payload(payload):
+    if len(payload) < 65: raise ValueError("Payload too short")
+    public_key = payload[-65:]
+    token = payload[:-65]
+    return token, public_key
+
+# --- CRITTOGRAFIA ---
+def generate_ecdh_keys():
+    private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+    public_key = private_key.public_key()
+    return private_key, public_key
+
+def derive_session_keys(private_key, peer_public_key_bytes):
+    peer_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+        ec.SECP256R1(), peer_public_key_bytes
+    )
+    shared_secret = private_key.exchange(ec.ECDH(), peer_public_key)
+    hkdf = HKDF(algorithm=hashes.SHA256(), length=48, salt=None, info=b'iot_quic_v1', backend=default_backend())
+    key_material = hkdf.derive(shared_secret)
+    return key_material[:32], key_material[32:] # session_key, hp_key
+
+def encrypt_data(key, plaintext):
+    iv = os.urandom(12)
+    cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+    return iv + encryptor.tag + ciphertext 
+
+def decrypt_data(key, data):
+    if len(data) < 28: raise ValueError("Data too short")
+    iv = data[:12]
+    tag = data[12:28]
+    ciphertext = data[28:]
+    cipher = Cipher(algorithms.AES(key), modes.GCM(iv, tag), backend=default_backend())
+    decryptor = cipher.decryptor()
+    return decryptor.update(ciphertext) + decryptor.finalize()
+
+# --- HEADER PROTECTION ---
+def apply_header_protection(header_bytes, hp_key, sample):
+    cipher = Cipher(algorithms.AES(hp_key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    mask = encryptor.update(sample[:16]) + encryptor.finalize()
+    pkt_num_bytes = header_bytes[5:9]
+    masked_pkt_num = bytes(a ^ b for a, b in zip(pkt_num_bytes, mask[:4]))
+    return header_bytes[:5] + masked_pkt_num
+
+def remove_header_protection(protected_header, hp_key, sample):
+    return apply_header_protection(protected_header, hp_key, sample)
+
+# --- ANTI-SPOOFING TOKEN ---
+def generate_retry_token(master_key, address_tuple):
+    ip_addr = address_tuple[0]
+    timestamp = int(time.time())
+    token_data = f"{timestamp}:{ip_addr}".encode('utf-8')
+    return encrypt_data(master_key, token_data)
+
+def validate_retry_token(master_key, address_tuple, token, validity_seconds=30):
+    try:
+        plaintext = decrypt_data(master_key, token)
+        ts_str, ip_in_token = plaintext.decode('utf-8').split(':', 1)
+        if ip_in_token != address_tuple[0]: return False
+        if time.time() - int(ts_str) > validity_seconds: return False
+        return True
+    except: return False
