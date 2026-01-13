@@ -47,35 +47,30 @@ def main():
                 sock.sendto(resp, addr)
                 print(f"[HANDSHAKE] Keys generate per {conn_id}")
 
-            # --- DATA (Qui applichiamo la PROTEZIONE HEADER) ---
+            # ...
             elif ptype == PTYPE_DATA:
                 if conn_id in sessions:
                     session_key, hp_key = sessions[conn_id]
                     
-                    # 1. Dobbiamo togliere la protezione all'header
-                    # Usiamo i primi 16 byte del payload (che è il ciphertext) come "Sample"
-                    sample = payload[:16]
+                    # --- MODIFICA: SALTIAMO LA RIMOZIONE PROTEZIONE ---
                     
-                    # Ricostruiamo l'header "protetto" completo per passarlo alla funzione
-                    full_protected_header = packet[:9] 
+                    # NON facciamo remove_header_protection.
+                    # Leggiamo direttamente il packet number grezzo che è arrivato.
                     
-                    # Rimuoviamo la protezione
-                    unprotected_header = remove_header_protection(full_protected_header, hp_key, sample)
+                    # Parsa di nuovo il pacchetto, sapendo che i bytes 5-9 sono già il numero vero
+                    _, _, real_pn_bytes, _ = parse_raw_header(packet)
                     
-                    # Ora possiamo leggere il vero Packet Number
-                    _, _, real_pn_bytes, _ = parse_raw_header(unprotected_header + payload)
+                    # Convertiamo i bytes in intero
                     real_pkt_num = struct.unpack('!I', real_pn_bytes)[0]
                     
-                    print(f"[DATA] Header sbloccato! PktNum reale: {real_pkt_num}")
+                    print(f"[DATA] PktNum ricevuto (in chiaro): {real_pkt_num}")
                     
-                    # 2. Decifriamo il payload
-                    plaintext = decrypt_data(session_key, payload)
-                    print(f"       Messaggio: {plaintext.decode()}")
-                else:
-                    print(f"[ERR] Sessione {conn_id} sconosciuta")
-
-        except Exception as e:
-            print(f"Errore: {e}")
+                    # 2. Decifriamo il payload (questo resta uguale)
+                    try:
+                        plaintext = decrypt_data(session_key, payload)
+                        print(f"       Messaggio: {plaintext.decode()}")
+                    except Exception as e:
+                        print(f"       Err decifratura: {e}")
 
 if __name__ == "__main__":
     main()
