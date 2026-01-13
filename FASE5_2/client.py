@@ -34,27 +34,24 @@ def main():
     session_key, hp_key = derive_session_keys(clt_priv, srv_pub)
     print(" -> Chiavi derivate (Session + Header Protection).")
 
-    # 5. INVIO DATI CON HEADER PROTECTION
-    real_pkt_num = 100 # Facciamo finta di essere al pacchetto 100
-    msg = b"Header Protection attiva! Non puoi vedere che questo e' il pacchetto 100."
+    # 5. INVIO DATI (MODIFICA DEBUG: HEADER IN CHIARO)
+    real_pkt_num = 100 
+    msg = b"Sto inviando il pacchetto 100 in chiaro!"
     
     # A. Creiamo il pacchetto standard (Header Chiaro + Payload Cifrato)
     encrypted_payload = encrypt_data(session_key, msg)
     packet_clear_header = create_packet(PTYPE_DATA, my_id, real_pkt_num, encrypted_payload)
     
-    # B. Applichiamo la protezione all'Header
-    # Prendiamo solo l'header (primi 9 byte)
-    header_bytes = packet_clear_header[:9]
-    # Sample = primi 16 byte del payload cifrato
-    sample = encrypted_payload[:16]
+    # --- MODIFICA: SALTIAMO LA PROTEZIONE ---
+    # Invece di calcolare la maschera e applicarla, inviamo direttamente packet_clear_header
     
-    protected_header = apply_header_protection(header_bytes, hp_key, sample)
+    # protected_header = apply_header_protection(...)  <-- COMMENTA QUESTO
+    # final_packet = protected_header + encrypted_payload <-- COMMENTA QUESTO
     
-    # C. Assembliamo il pacchetto finale (Header Protetto + Payload Cifrato)
-    final_packet = protected_header + encrypted_payload
+    # Inviamo quello con l'header pulito
+    sock.sendto(packet_clear_header, server_addr)
     
-    sock.sendto(final_packet, server_addr)
-    print(f" -> Pacchetto {real_pkt_num} inviato con header offuscato.")
+    print(f" -> Pacchetto {real_pkt_num} inviato (HEADER IN CHIARO per debug).")
 
     sock.close()
 
