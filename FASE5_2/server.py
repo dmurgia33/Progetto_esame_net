@@ -1,10 +1,11 @@
+# server.py
 import socket
+import struct
 from common import (
     parse_raw_header, create_packet, generate_ecdh_keys, derive_session_keys, 
-    decrypt_data, serialize_public_key, apply_header_protection, remove_header_protection,
+    decrypt_data, serialize_public_key,
     PTYPE_INITIAL, PTYPE_RETRY, PTYPE_HANDSHAKE, PTYPE_DATA
 )
-import struct
 
 def main():
     server_ip = '127.0.0.1'
@@ -12,65 +13,61 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((server_ip, server_port))
 
-    # Sessions ora salva una tupla: (session_key, hp_key)
     sessions = {} 
     SECRET_TOKEN = b'TOKEN_SICURO_123' 
 
-    print(f"=== Server (FASE 5 - Header Protection) avviato ===")
+    print(f"=== Server DEBUG (Header in chiaro) avviato su {server_ip}:{server_port} ===")
 
     while True:
         try:
             packet, addr = sock.recvfrom(2048)
-            # 1. Leggiamo solo Type e ConnID (che sono in chiaro)
             ptype, conn_id, raw_pn_bytes, payload = parse_raw_header(packet)
 
-            # --- INIT e HANDSHAKE (Non cifrati nell'header per questo POC, per semplicità) ---
+            # --- INIT ---
             if ptype == PTYPE_INITIAL:
-                # ... Logica identica alla fase 4 ...
+                print(f"[INIT] Ricevuto INITIAL da {addr}. Invio RETRY.")
                 resp = create_packet(PTYPE_RETRY, conn_id, 0, SECRET_TOKEN)
                 sock.sendto(resp, addr)
 
+            # --- HANDSHAKE ---
             elif ptype == PTYPE_HANDSHAKE:
-                # ... Logica identica alla fase 4 ...
                 token_received = payload[:16]
                 client_pub_key = payload[16:]
-                if token_received != SECRET_TOKEN: continue
+                
+                if token_received != SECRET_TOKEN:
+                    print("Token errato")
+                    continue
 
                 srv_priv, srv_pub = generate_ecdh_keys()
-                # NOTA: Ora derive_session_keys restituisce DUE chiavi
                 sess_key, hp_key = derive_session_keys(srv_priv, client_pub_key)
-                sessions[conn_id] = (sess_key, hp_key) # Salviamo entrambe
+                sessions[conn_id] = sess_key # Salviamo solo la session key per ora
                 
                 resp_payload = serialize_public_key(srv_pub)
-                # NOTA: Per l'handshake lasciamo l'header in chiaro per semplicità di bootstrap
                 resp = create_packet(PTYPE_HANDSHAKE, conn_id, 0, resp_payload)
                 sock.sendto(resp, addr)
-                print(f"[HANDSHAKE] Keys generate per {conn_id}")
+                print(f"[HANDSHAKE] Keys generate per ID {conn_id}")
 
-            # ...
+            # --- DATA (DEBUG: LEGGE IN CHIARO) ---
             elif ptype == PTYPE_DATA:
                 if conn_id in sessions:
-                    session_key, hp_key = sessions[conn_id]
+                    session_key = sessions[conn_id]
                     
-                    # --- MODIFICA: SALTIAMO LA RIMOZIONE PROTEZIONE ---
+                    # QUI STA LA MODIFICA: Leggiamo direttamente il numero grezzo
+                    # Non applichiamo 'remove_header_protection'
+                    pkt_num_int = struct.unpack('!I', raw_pn_bytes)[0]
                     
-                    # NON facciamo remove_header_protection.
-                    # Leggiamo direttamente il packet number grezzo che è arrivato.
+                    print(f"[DATA] PktNum ricevuto (IN CHIARO): {pkt_num_int}")
                     
-                    # Parsa di nuovo il pacchetto, sapendo che i bytes 5-9 sono già il numero vero
-                    _, _, real_pn_bytes, _ = parse_raw_header(packet)
-                    
-                    # Convertiamo i bytes in intero
-                    real_pkt_num = struct.unpack('!I', real_pn_bytes)[0]
-                    
-                    print(f"[DATA] PktNum ricevuto (in chiaro): {real_pkt_num}")
-                    
-                    # 2. Decifriamo il payload (questo resta uguale)
                     try:
                         plaintext = decrypt_data(session_key, payload)
-                        print(f"       Messaggio: {plaintext.decode()}")
+                        print(f"       Messaggio Decifrato: {plaintext.decode()}")
                     except Exception as e:
-                        print(f"       Err decifratura: {e}")
+                        print(f"       Errore decifratura: {e}")
+                else:
+                    print(f"[ERR] Sessione {conn_id} sconosciuta")
+
+        except Exception as e:
+            print(f"Errore: {e}")
 
 if __name__ == "__main__":
     main()
