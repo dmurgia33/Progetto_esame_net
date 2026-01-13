@@ -35,7 +35,7 @@ def main():
     print(" -> Chiavi derivate (Session + Header Protection).")
 
     # 5. INVIO DATI CON HEADER PROTECTION
-    real_pkt_num = 100 # Facciamo finta di essere al pacchetto 100
+    real_pkt_num = 0xDEADBEEF  # Facciamo finta di essere al pacchetto 0xDEADBEEF utile per debugging
     msg = b"Header Protection attiva! Non puoi vedere che questo e' il pacchetto 100."
     
     # A. Creiamo il pacchetto standard (Header Chiaro + Payload Cifrato)
