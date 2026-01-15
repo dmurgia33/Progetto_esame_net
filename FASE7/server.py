@@ -49,7 +49,7 @@ def is_replay_or_old(session_state, pkt_num):
     return False
 
 def main():
-    server_ip = '127.0.0.1'
+    server_ip = '0.0.0.0'
     server_port = 12345
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((server_ip, server_port))
