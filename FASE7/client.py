@@ -8,7 +8,7 @@ from common import (
 )
 
 def main():
-    server_addr = ('127.0.0.1', 12345)
+    server_addr = ('192.168.0.0', 12345) # Mettere indirizzo IP del server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(2.0)
     
