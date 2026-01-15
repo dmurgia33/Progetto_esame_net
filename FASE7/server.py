@@ -81,7 +81,7 @@ def main():
                     token_received, client_pub_key = parse_handshake_payload(payload)
                 except ValueError: continue 
 
-                if not validate_retry_token(SERVER_MASTER_KEY, addr, token_received, validity_seconds=10):
+                if not validate_retry_token(SERVER_MASTER_KEY, addr, token_received, validity_seconds=5):
                     print(f"[ERR] Token invalido da {addr}")
                     continue
                 
