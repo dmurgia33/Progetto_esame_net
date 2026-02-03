@@ -1,6 +1,6 @@
 # Progetto_network_security
 
-# Secure User-Space Transport Protocol (S-UDP) 🛡️🚀
+# Secure User-Space Transport Protocol (S-UDP)
 
 ![Language](https://img.shields.io/badge/Language-Python_3.x-blue.svg)
 ![Security](https://img.shields.io/badge/Security-AEAD_%2F_ECDHE-green.svg)
@@ -11,21 +11,21 @@ Ispirato all'architettura di **QUIC** e **TLS 1.3**, il progetto mira a combinar
 
 ---
 
-## 📋 Panoramica
+## Panoramica
 Il protocollo risolve i limiti intrinseci dei trasporti tradizionali:
 - **Vs TCP:** Elimina l'Head-of-Line Blocking e riduce la latenza di handshake.
 - **Vs UDP Standard:** Aggiunge cifratura, autenticazione e gestione dello stato.
 
 L'intero stack è sviluppato in **Python** utilizzando primitive crittografiche moderne, offrendo un canale sicuro *by-design* resistente a sniffing e manipolazione.
 
-## ✨ Funzionalità Chiave
+## Funzionalità Chiave
 
-### 🔒 Sicurezza & Crittografia
+### Sicurezza & Crittografia
 * **Authenticated Encryption (AEAD):** Utilizzo di **AES-256-GCM** per garantire confidenzialità e integrità del payload.
 * **Perfect Forward Secrecy (PFS):** Scambio chiavi effimero tramite **ECDHE** (Curva SECP256R1/P-256).
 * **Privacy Avanzata:** Meccanismo di **Header Protection** per offuscare il *Packet Number* e prevenire la Traffic Analysis.
 
-### 🛡️ Resilienza di Rete
+### Resilienza di Rete
 * **Anti-Spoofing:** Handshake con **Stateless Retry Token** per prevenire attacchi di amplificazione e DoS.
 * **Anti-Replay:** Implementazione lato server di una **Sliding Window** ($O(1)$) per scartare pacchetti duplicati.
 * **Connection Migration:** Utilizzo di un **Connection ID** per mantenere la sessione attiva anche al variare dell'indirizzo IP/Porta del client (es. passaggio Wi-Fi <-> 4G).
