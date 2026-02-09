@@ -1,4 +1,5 @@
 S-UDP: Secure User-Space Transport Protocol
+
 S-UDP è un prototipo di protocollo di trasporto sicuro costruito interamente in Python sopra UDP. L'obiettivo è offrire la velocità di UDP unita alla sicurezza di TLS 1.3, gestendo tutto a livello applicativo (User Space) anziché a livello di Kernel.
 
 Caratteristiche principali:
@@ -12,6 +13,7 @@ Sicurezza Avanzata: Protezione contro attacchi Replay e IP Spoofing.
 Connessione Moderna: Scambio chiavi con ECDHE per una sicurezza a prova di futuro (Forward Secrecy).
 
 Le Fasi del Progetto
+
 Il progetto è stato sviluppato in modo incrementale, aggiungendo un mattoncino di sicurezza alla volta:
 
 Fase 0 - Pianificazione: Definizione degli obiettivi e scelta delle tecnologie.
@@ -31,5 +33,4 @@ Fase 6 - Anti-Spoofing: Aggiunta di un sistema di "Token" per verificare che l'I
 Fase 7 - Anti-Replay: Implementazione di una "Finestra Scorrevole" per ignorare pacchetti vecchi o duplicati.
 
 Fase 8 - Test di Attacco: Creazione di una suite per tentare di "rompere" il protocollo e confermarne la robustezza.
-Bash
-python client.py
+
