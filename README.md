@@ -75,34 +75,6 @@ Il sistema è modellato come una **Macchina a Stati Finiti** che gestisce il cic
 
 
 
-## 📂 Struttura del Repository
-
-Il codice sorgente riflette l'approccio modulare adottato nello sviluppo del protocollo:
-
-* 
-**`server.py`**: Implementa la logica lato server, inclusa la macchina a stati, la gestione della *Sliding Window* per l'anti-replay e la generazione/validazione dei Token stateless.
-
-
-* 
-**`client_completo.py`**: Client legittimo capace di eseguire l'handshake a 4 vie, gestire la ricezione del Retry Token e stabilire il canale cifrato.
-
-
-* **`attack_suite.py`**: Suite di test offensivi sviluppata per validare la sicurezza. Include moduli per simulare:
-* 
-*Data Replay Attack* (Test della Sliding Window).
-
-
-* 
-*Token Expiry Attack* (Test della validazione temporale dei Token).
-
-
-* 
-*Tampering/Man-in-the-Middle* (Test dell'integrità AES-GCM).
-
-
-
-
-
 ## 📊 Validazione
 
 L'efficacia del protocollo è stata verificata tramite analisi del traffico con **Wireshark**, confermando che:
